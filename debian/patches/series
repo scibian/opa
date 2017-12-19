@@ -1,0 +1,7 @@
+0001-makefile-tcl-rules.patch
+0002-makefile-osvendor.patch
+0003-lspci-path.patch
+0004-dpkg-script-support.patch
+0005-fix-manpage-undefined-nl-bad-whatis.patch
+0006-port-comp-scripts.patch
+0007-port-opacapture.patch

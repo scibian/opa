@@ -1,0 +1,83 @@
+Source: opa
+Maintainer: Brian T. Smith <bsmith@systemfabricworks.com>
+Section: utils
+Priority: extra
+Standards-Version: 3.9.6
+Build-Depends: debhelper (>= 9),
+ libexpat-dev,
+ libssl-dev,
+ libncurses5-dev,
+ tcl-dev,
+ libibumad-dev,
+ libibverbs-dev,
+ libibmad-dev,
+ ibacm-dev,
+ libopensm-dev,
+ zlib1g-dev
+
+Package: opa-basic-tools
+Architecture: linux-any
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
+ ${perl:Depends},
+ libexpat1,
+ libibmad5,
+ libibumad3,
+ libibverbs1,
+ bc,
+ pciutils,
+ libosmcomp3,
+ libosmvendor4,
+ libopensm5a,
+ zlib1g,
+ libssl1.0.0,
+ libncurses5,
+ expect,
+ tcl
+Description: Management level tools and scripts.
+ Contains basic tools for fabric management necessary on all compute nodes.
+
+Package: opa-address-resolution
+Architecture: linux-any
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
+ opa-basic-tools (=${binary:Version}),
+ ibacm
+Description: Contains Address Resolution manager
+ This package contains the ibacm distributed SA provider (dsap) for name
+ and address resolution on OPA platform.
+ .
+ It also contains the library and tools to access the shared memory
+ database exported by dsap.
+
+Package: opa-fastfabric
+Architecture: linux-any
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
+ ${perl:Depends},
+ opa-basic-tools (=${binary:Version}),
+ tcl,
+ expect
+Replaces: opa-basic-tools (=${binary:Version}),
+ opa-fast-fabric
+Conflicts: opa-fast-fabric
+Description: Management level tools and scripts.
+ Contains tools for managing fabric on a management node.
+
+Package: libopamgt0
+Architecture: linux-any
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
+ libibumad3
+Description: Omni-Path management API library
+ This package contains the library necessary to build applications that
+ interface with an Omni-Path FM.
+
+Package: libopamgt-dev
+Section: libdevel
+Architecture: linux-any
+Depends: ${misc:Depends},
+ libopamgt0 (=${binary:Version})
+Description: Summary: Omni-Path library development headers
+ This package contains the necessary headers for opamgt development.
+
