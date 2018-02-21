@@ -1,9 +1,18 @@
-opa (10.5.0.0-140-2ifs+c9u1) calibre9; urgency=medium
+opa (10.6.1.0-2-2ifs+deb9) UNRELEASED; urgency=medium
 
-  * Build for Calibre9
-  * Add a debian/gbp.conf file
+  * Branch for stretch.
+  * Don't remove conf dirs in component uninstall.
 
- -- Mehdi Dogguy <mehdi.dogguy@edf.fr>  Tue, 19 Dec 2017 18:16:30 +0100
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Wed, 21 Feb 2018 14:33:14 -0600
+
+opa (10.6.1.0-2-1ifs) UNRELEASED; urgency=medium
+
+  * Import opa 10.6.1.0-2 from IFS RHEL73 10.6.1.0.2.
+  * Use git packaging and pristine-tar.
+  * Added opa-dbg package.
+  * Refresh patches and modify to address porting issues in latest version.
+
+ -- Brian T. Smith <bsmith@systemfabricworks.com>  Mon, 18 Dec 2017 16:47:54 -0600
 
 opa (10.5.0.0-140-2ifs) UNRELEASED; urgency=medium
 

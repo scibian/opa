@@ -59,16 +59,10 @@ DIRS			= \
 	$(TL_DIR)/MpiApps \
 	$(TL_DIR)/ShmemApps \
 	$(TL_DIR)/Iih \
-	$(TL_DIR)/zlib \
 	$(TL_DIR)/TestTools \
-	$(TL_DIR)/SrpTools \
-	$(TL_DIR)/InicTools \
-	$(TL_DIR)/Tests \
-	$(TL_DIR)/IbaTests \
 	$(TL_DIR)/IbPrint \
 	$(TL_DIR)/Topology \
 	$(TL_DIR)/opasadb \
-	$(TL_DIR)/Md5 \
 	$(TL_DIR)/Lsf \
 	$(TL_DIR)/Moab \
 	$(TL_DIR)/Dsap \

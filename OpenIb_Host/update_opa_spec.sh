@@ -37,21 +37,36 @@ source ./ff_filegroups.sh
 
 if [ "$id" = "rhel" ]
 then
+	GE_7_4=$(echo "$versionid >= 7.4" | bc)
+	if [ $GE_7_4 = 1 ]
+	then
+		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, libibmad-devel, ibacm-devel/g" opa.spec
+	else
+		sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" opa.spec
+	fi
 	sed -i "s/__RPM_REQ/expect%{?_isa}, tcl%{?_isa}, openssl%{?_isa}, expat%{?_isa}, libibumad%{?_isa}, libibverbs%{?_isa}, libibmad%{?_isa}/g" opa.spec
 	sed -i "s/__RPM_RQ2/libibumad/g" opa.spec
 	sed -i "s/__RPM_BLDREQ/expat-devel, gcc-c++, openssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" opa.spec
 	sed -i "/__RPM_DEBUG/,+1d" opa.spec
 elif [ "$id" = "sles" ]
 then
-	st=$(echo "$versionid >= 11.1" | bc)
-	if [ $st = 1 ]
+	GE_11_1=$(echo "$versionid >= 11.1" | bc)
+	GE_12_2=$(echo "$versionid >= 12.2" | bc)
+	GE_12_3=$(echo "$versionid >= 12.3" | bc)
+	if [ $GE_11_1 = 1 ]
 	then
 		sed -i "s/__RPM_DEBUG/%debug_package/g" opa.spec
 	else
 		sed -i "/__RPM_DEBUG/,+1d" opa.spec
 	fi
-	sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" opa.spec
-	sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" opa.spec
+	if [ $GE_12_3 = 1 ]
+	then
+		sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" opa.spec
+		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, rdma-core-devel, libibmad-devel, ibacm-devel/g" opa.spec
+	else
+		sed -i "s/__RPM_REQ/libexpat1, libibmad5, libibumad3, libibverbs1, openssl, expect, tcl/g" opa.spec
+		sed -i "s/__RPM_BLDREQ/libexpat-devel, gcc-c++, libopenssl-devel, ncurses-devel, tcl-devel, libibumad-devel, libibverbs-devel, libibmad-devel, ibacm-devel/g" opa.spec
+	fi
 	sed -i "s/__RPM_RQ2/libibumad3/g" opa.spec
 else
 	echo ERROR: Unsupported distribution: $id $versionid

@@ -1,17 +1,15 @@
 #!/usr/bin/make -f
-#
-# Copyright (c)2016 System Fabric Works, Inc.
-#
 
 BUILDDIR=$(CURDIR)/OpenIb_Host/BUILD
 DESTDIR=$(CURDIR)/debian/tmp
+export LIBDIR=/usr/lib
 
 %:
 	dh $@ --parallel
 
 override_dh_auto_clean:
 
-override_dh_autoconfigure:
+override_dh_auto_configure:
 
 override_dh_auto_build:
 	mkdir $(BUILDDIR)
@@ -35,6 +33,10 @@ override_dh_auto_install:
 	mkdir -p $(DESTDIR)/usr/share/man/man8
 	mkdir -p $(DESTDIR)/usr/src/opa/mpi_apps
 	mkdir -p $(DESTDIR)/usr/src/opa/shmem_apps
-	BUILDDIR=$(BUILDDIR) DESTDIR=$(DESTDIR) LIBDIR= ./OpenIb_Host/ff_install.sh
-	install -m 0644 debian/intel-opa.sh debian/tmp/etc/profile.d/intel-opa.sh
+	BUILDDIR=$(BUILDDIR) DESTDIR=$(DESTDIR) LIBDIR=$(LIBDIR) ./OpenIb_Host/ff_install.sh
+	install -m 0644 debian/intel-opa.sh $(DESTDIR)/etc/profile.d/intel-opa.sh
+	find $(DESTDIR)/usr -type f -name '*.[ch]' -exec chmod a-x {} \;
+	ln -s libopamgt.so.0.2.0 $(DESTDIR)/$(LIBDIR)/libopamgt.so.0
+	ln -s libopasadb.so.1.0.0 $(DESTDIR)/$(LIBDIR)/libopasadb.so.1
+
 
