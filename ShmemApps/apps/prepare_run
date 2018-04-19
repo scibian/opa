@@ -1,0 +1,138 @@
+#!/bin/sh
+# BEGIN_ICS_COPYRIGHT8 ****************************************
+# 
+# Copyright (c) 2015, Intel Corporation
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of Intel Corporation nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# 
+# END_ICS_COPYRIGHT8   ****************************************
+
+# [ICS VERSION STRING: unknown]
+
+# helper script to handle common setup for the sample application run scripts
+
+# this script should be . included in a run_ script
+# Input:
+#   MPICH_PREFIX  - path to MPICH tools
+#   MPI_HOSTS  - mpi_hosts file to use (default is $PWD/mpi_hosts)
+#   SHOW_MPI_HOSTS - set to "y" if MPI_HOSTS contents should be output prior
+#                    to starting job.  Set to "n" to disable
+#                    defaults to "y"
+#   SHOW_MPI_HOSTS_LINES - maximum lines in MPI_HOSTS to show.  Default is 128
+#                    Only lines applicable to job will be shown.
+#                    Note the file might include some comment lines
+#   NUM_PROCESSES - number of processes in job, if "" no count is specified
+#                if "all" use wc -l $MPI_HOSTS as the process count
+#   LOGFILE - logfile to append results of run to, if "" this script will define
+#   LOGSUFFIX - suffix to append to logfile name defined by this script
+# Output:
+#   MPIRUN_CMD - MPI command to start job, actual program name and args can be suffixed
+
+get_shmem_bench_dir()
+{
+	local instDir=`rpm -q --queryformat="%{INSTFILENAMES}" shmem-benchmarks_gcc_hfi`
+	if [[ $? -ne 0 || $instDir = "(none)" || ! -d $instDir ]] ; then
+		echo "Warning: shmem-benchmarks dir could not be determined via rpm" >&2
+		instDir="/usr/shmem/gcc/openshmem-1.0h-hfi/tests/shmem-benchmarks"
+	fi
+	echo $instDir
+}
+
+show_mpi_hosts()
+{
+	local lines
+
+	if [[ -z $MPI_HOSTS ]] ; then
+		echo "No MPI hosts file defined"
+		return 0
+	fi
+
+	echo "Using hosts list: $MPI_HOSTS"
+
+	if [ "${SHOW_MPI_HOSTS:-y}" = "y" ]
+	then
+		show_lines=${SHOW_MPI_HOSTS_LINES:-128}
+		if [ "z$NUM_PROCESSES" != "z" ]
+		then
+			# there may be comments before the last host.  So we number the
+			# lines, filter out the lines with comments and blank lines
+			# and then get the "NUM_PROCESSES"th line's number
+			avail_lines=$(nl -s';' -nln -w1 -ba $MPI_HOSTS|egrep -v '^[0-9]*;[[:space:]]*#'|egrep -v '^[0-9]*;[[:space:]]*$'|head -$NUM_PROCESSES|tail -1|cut -f1 -d';' )
+		else
+			# no NUM_PROCESSES, so use whole file
+			avail_lines=$(cat $MPI_HOSTS|wc -l)
+		fi
+		if [ $show_lines -ge $avail_lines ]
+		then
+			echo "Hosts in run:"
+			head -n $avail_lines $MPI_HOSTS
+		else
+			echo "First $show_lines lines in host list for run:"
+			head -n $show_lines $MPI_HOSTS
+		fi
+		echo
+	fi
+}
+
+if [ -z "$LOGFILE" ]
+then
+	CURTIME=`date +%d%b%y%H%M%S`
+	if [ ! -d logs ]
+	then
+		mkdir -p logs
+	fi
+	LOGFILE=$PWD/logs/$APP.$CURTIME$LOGSUFFIX
+	echo " Running MPI tests with $NUM_PROCESSES processes"
+	echo " logfile $LOGFILE"
+	> $LOGFILE
+fi
+
+SHMEM_PREFIX=${SHMEM_PREFIX:-`pkg-config --variable=prefix openshmem`}
+SHMEM_PREFIX=${SHMEM_PREFIX:-/usr/shmem/gcc/openshmem-1.0h-hfi}	# default SHMEM_PREFIX
+export SHMEM_RUN=$SHMEM_PREFIX/bin/oshrun
+
+if [[ ! -e $SHMEM_RUN ]] ; then
+	echo "$SHMEM_RUN: Not found" >&2
+	exit 1
+fi
+
+OPENSHMEM_PREFIX=${OPENSHMEM_PREFIX:-`pkg-config --variable=prefix openshmem`}
+OPENSHMEM_PREFIX=${OPENSHMEM_PREFIX:-/usr/shmem/gcc/openshmem-1.0h-hfi}
+GASNET_PREFIX=${GASNET_PREFIX:-/usr/shmem/gcc/gasnet-1.24.0-openmpi-hfi}
+export MPI_HOSTS=${MPI_HOSTS:-./shmem_hosts}
+
+if [[ -z $MPICH_PREFIX ]] ; then
+	. ./select_mpi
+	if [[ -z $MPICH_PREFIX ]] ; then
+		echo "Error: MPICH_PREFIX not set" >&2
+		exit 1
+	fi
+fi
+
+export PATH=${MPICH_PREFIX}/bin:${PATH}
+export LD_LIBRARY_PATH=${MPICH_PREFIX}/lib64:${LD_LIBRARY_PATH}
+
+export PATH=${OPENSHMEM_PREFIX}/bin:${GASNET_PREFIX}/bin:${PATH}
+export LD_LIBRARY_PATH=${OPENSHMEM_PREFIX}/lib:${GASNET_PREFIX}/lib:${LD_LIBRARY_PATH}
+export MPIRUN_CMD="mpirun --map-by node -np %N -mca pml ob1 -mca btl tcp,sm,self -mca plm_rsh_no_tree_spawn 1 --allow-run-as-root --hostfile $MPI_HOSTS %P %A"
